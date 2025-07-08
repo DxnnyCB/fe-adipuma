@@ -3,7 +3,6 @@ import { EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
-
 import Button from "../ui/button/Button";
 import GoogleLoginButton from "./GoogleLoginButton";
 import { login, loginWithGoogle } from "./services/AuthService";
@@ -15,27 +14,43 @@ export default function SignInForm() {
   const [isChecked, setIsChecked] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false); // ✅ nuevo estado
 
   const navigate = useNavigate();
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true); // ✅ Inicia loading
     try {
       const data = await login(email, password);
-      console.log("🔐 Login exitoso:", data);
       localStorage.setItem("token", data.token);
-      localStorage.setItem("nombreUsuario", JSON.stringify(data.nombreUsuario)); // Guardar usuario si es necesario
+      localStorage.setItem("nombreUsuario", JSON.stringify(data.nombreUsuario));
       navigate("/welcome-banner");
     } catch (err) {
       toast.error("Error al iniciar sesión: " + (err as Error).message);
+    } finally {
+      setLoading(false); // ✅ Finaliza loading
     }
   };
 
+  const handleGoogleLogin = async (googleId: string) => {
+    setLoading(true);
+    try {
+      const data = await loginWithGoogle(googleId);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("nombreUsuario", JSON.stringify(data.nombreUsuario));
+      navigate("/welcome-banner");
+    } catch (err) {
+      toast.error("Error al iniciar sesión con Google: " + (err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex flex-col flex-1">
-      <div className="w-full max-w-md pt-10 mx-auto">
-      </div>
+      <div className="w-full max-w-md pt-10 mx-auto"></div>
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
         <div>
           <div className="mb-5 sm:mb-8">
@@ -48,19 +63,7 @@ export default function SignInForm() {
           </div>
           <div>
             <div className="mb-4">
-              <GoogleLoginButton
-                onSuccess={async (googleId) => {
-                  try {
-                    const data = await loginWithGoogle(googleId);
-                    console.log("🔐 Login con Google exitoso:", data);
-                    localStorage.setItem("token", data.token);
-                    localStorage.setItem("nombreUsuario", JSON.stringify(data.nombreUsuario));
-                    navigate("/welcome-banner");
-                  } catch (err) {
-                    toast.error("Error al iniciar sesión con Google: " + (err as Error).message);
-                  }
-                }}
-              />
+              <GoogleLoginButton onSuccess={handleGoogleLogin} />
             </div>
             <div className="relative py-3 sm:py-5">
               <div className="absolute inset-0 flex items-center">
@@ -75,25 +78,23 @@ export default function SignInForm() {
             <form onSubmit={handleSubmit}>
               <div className="space-y-6">
                 <div>
-                  <Label>
-                    Correo Electrónico <span className="text-error-500">*</span>{" "}
-                  </Label>
+                  <Label>Correo Electrónico <span className="text-error-500">*</span></Label>
                   <Input
                     placeholder="info@gmail.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
                   />
                 </div>
                 <div>
-                  <Label>
-                    Contraseña <span className="text-error-500">*</span>{" "}
-                  </Label>
+                  <Label>Contraseña <span className="text-error-500">*</span></Label>
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="Ingresa tu contraseña"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      disabled={loading}
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -109,19 +110,15 @@ export default function SignInForm() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Checkbox checked={isChecked} onChange={setIsChecked} />
+                    <Checkbox checked={isChecked} onChange={setIsChecked} disabled={loading} />
                     <span className="block font-normal text-gray-700 text-theme-sm dark:text-gray-400">
                       Mantenerme conectado
                     </span>
                   </div>
                 </div>
                 <div>
-                  <Button 
-                  className="w-full" 
-                  size="sm"
-                  type="submit"
-                  >
-                    Iniciar Sesión
+                  <Button className="w-full" size="sm" type="submit" disabled={loading}>
+                    {loading ? "Validando..." : "Iniciar Sesión"}
                   </Button>
                 </div>
               </div>
