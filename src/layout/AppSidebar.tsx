@@ -102,7 +102,7 @@ const othersItems: NavItem[] = [
   ),
   {
     icon: <PlugInIcon />,
-    name: "Authentication",
+    name: "Autenticación",
     subItems: [
       /*{ name: "Ingresar", path: "/", pro: false },*/
       { name: "Cerrar Sesión", path: "/logout", pro: false },
