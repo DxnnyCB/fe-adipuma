@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import ComponentCard from "../../../common/ComponentCard.tsx";
 import Label from "../../../form/Label.tsx";
 import InputPrices from "../../../form/input/InputPrices.tsx";
@@ -7,86 +7,25 @@ import DatePicker from "../../../form/date-picker.tsx";
 import Button from "../../../ui/button/Button.tsx";
 import { PaperPlaneIcon } from "../../../../icons/index.ts";
 import InputLinks from "../../../form/input/InputLinks.tsx";
-//import { addPurchaseStatus } from "../../services/CREATE/AddPurchaseStatus.ts";
-import { toast } from "react-toastify";
-//import { PurchaseStatusResponse } from "../../interfaces/PurchaseStatusResponse.interface.tsx";
+import { PurchaseStatusResponse } from "../../interfaces/PurchaseStatusResponse.interface.tsx";
+import { usePurchaseStatus, estadoCompraOptions } from "../../../../hooks/usePurchaseStatus.ts";
 
 interface PurchaseStatusProps {
-  onSubmit: (data: {
-    precioCompra: number;
-    estadoCompra: string;
-    fechaCompra: string;
-    linkAmazon: string;
-    linkUrlImagen: string;
-  }) => void;
+  onSubmit: (data: PurchaseStatusResponse) => void;
 }
 
-export default function PurchaseStatus({ onSubmit }: PurchaseStatusProps) {
-  const [precioCompra, setPrecioCompra] = useState("");
-  const [estadoCompra, setEstadoCompra] = useState("");
-  const [fechaCompra, setFechaCompra] = useState<Date | null>(null);
-  const [linkAmazon, setlinkAmazon] = useState("");
-  const [linkUrlImagen, setlinkUrlImagen] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const options = [
-    { value: "En camino", label: "En camino" },
-    { value: "Entregado", label: "Entregado" },
-  ];
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validación de campos obligatorios
-    if (
-      !precioCompra.trim() ||
-      !estadoCompra ||
-      !fechaCompra ||
-      !linkAmazon.trim() ||
-      !linkUrlImagen.trim()
-    ) {
-      setError("Todos los campos son obligatorios.");
-      return;
-    }
-    setError(null);
-    setLoading(true);
-
-    // Formatea la fecha como "DD-MM-YYYY"
-    let fechaFormateada = "";
-    if (fechaCompra instanceof Date && !isNaN(fechaCompra.getTime())) {
-      const year = fechaCompra.getFullYear();
-      const month = String(fechaCompra.getMonth() + 1).padStart(2, "0");
-      const day = String(fechaCompra.getDate()).padStart(2, "0");
-      fechaFormateada = `${year}-${month}-${day}`;
-    }
-
-    // Convierte precioCompra a number
-    const precioCompraNumber = parseInt(precioCompra.replace(/\D/g, ""), 10);
-
-    const data = {
-      precioCompra: precioCompraNumber,
-      estadoCompra,
-      fechaCompra: fechaFormateada,
-      linkAmazon,
-      linkUrlImagen,
-    };
-    
-    try {
-      //const response = await addStatusPurchase(data) as PurchaseStatusResponse;
-      toast.success("Estado de compra agregado satisfactoriamente");
-      onSubmit(data); // Llama a la función onSubmit pasada como prop
-    } catch (err) {
-      setError("Error al guardar el estado de compra. " + err);
-      toast.error("Error al guardar el estado de compra");
-    } finally {
-      setLoading(false);
-    }
-  };
+const PurchaseStatus: React.FC<PurchaseStatusProps> = ({ onSubmit }) => {
+  const {
+    form,
+    loading,
+    error,
+    handleChange,
+    handleSubmit,
+  } = usePurchaseStatus({ onSubmit });
 
   return (
     <ComponentCard title="Agregar Estado de Compra">
-      <form className="space-y-6" onSubmit={handleSubmit}>
+      <form className="space-y-6" onSubmit={handleSubmit} autoComplete="off">
         {error && (
           <div className="text-red-500 text-sm">{error}</div>
         )}
@@ -98,18 +37,18 @@ export default function PurchaseStatus({ onSubmit }: PurchaseStatusProps) {
             type="text"
             id="precioCompra"
             placeholder="Ej: $200.000"
-            value={precioCompra}
-            onChange={e => setPrecioCompra(e.target.value)}
+            value={form.precioCompra}
+            onChange={e => handleChange("precioCompra", e.target.value)}
             required
           />
         </div>
         <div>
           <Label>Estado Compra</Label>
           <Select
-            options={options}
+            options={estadoCompraOptions}
             placeholder="Seleccione una opción"
-            value={estadoCompra}
-            onChange={setEstadoCompra}
+            value={form.estadoCompra}
+            onChange={value => handleChange("estadoCompra", value)}
             className="dark:bg-dark-900"
             required
           />
@@ -119,8 +58,8 @@ export default function PurchaseStatus({ onSubmit }: PurchaseStatusProps) {
             id="date-picker"
             label="Fecha de compra"
             placeholder="Seleccione una fecha"
-            value={fechaCompra}
-            onChange={(date) => setFechaCompra(date)}
+            value={form.fechaCompra}
+            onChange={date => handleChange("fechaCompra", date)}
             required
           />
         </div>
@@ -130,8 +69,8 @@ export default function PurchaseStatus({ onSubmit }: PurchaseStatusProps) {
             type="text"
             id="linkAmazon"
             placeholder="Ej: https://www.amazon.com/dp/B0DG6XW36Z?ref=ppx_yo2ov_dt_b_fed_asin_title"
-            value={linkAmazon}
-            onChange={e => setlinkAmazon(e.target.value)}
+            value={form.linkAmazon}
+            onChange={e => handleChange("linkAmazon", e.target.value)}
             required
           />
         </div>
@@ -141,13 +80,14 @@ export default function PurchaseStatus({ onSubmit }: PurchaseStatusProps) {
             type="text"
             id="linkUrlImagen"
             placeholder="Ej: https://m.media-amazon.com/images/I/51fZ8HdmIIL._AC_SX679_.jpg"
-            value={linkUrlImagen}
-            onChange={e => setlinkUrlImagen(e.target.value)}
+            value={form.linkUrlImagen}
+            onChange={e => handleChange("linkUrlImagen", e.target.value)}
             required
           />
         </div>
         <div className="flex items-center gap-5">
           <Button
+            type="submit"
             size="md"
             variant="primary"
             endIcon={
@@ -180,4 +120,6 @@ export default function PurchaseStatus({ onSubmit }: PurchaseStatusProps) {
       </form>
     </ComponentCard>
   );
-}
+};
+
+export default PurchaseStatus;

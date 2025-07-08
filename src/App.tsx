@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import SignIn from "./pages/AuthPages/SignIn";
 import SignUp from "./pages/AuthPages/SignUp";
 import NotFound from "./pages/OtherPage/NotFound";
@@ -21,6 +21,9 @@ import Home from "./pages/Dashboard/Home";
 import AdipumaForm from "./pages/Forms/AdipumaForm";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Logout from "./components/auth/Logout";
+import PrivateRoute from "./components/auth/PrivateRoute";
+import WelcomeBanner from "./layout/WelcomeBanner";
 
 export default function App() {
   return (
@@ -41,40 +44,36 @@ export default function App() {
       <Router>
         <ScrollToTop />
         <Routes>
-          {/* Dashboard Layout */}
-          <Route element={<AppLayout />}>
-            <Route index path="/" element={<Home />} />
-
-            {/* Others Page */}
+          {/* Rutas protegidas con AppLayout */}
+          <Route
+            element={
+              <PrivateRoute>
+                <AppLayout />
+              </PrivateRoute>
+            }
+          >
+            <Route index path="/dashboard" element={<Home />} />
+            <Route path="/welcome-banner" element={<WelcomeBanner />} />
             <Route path="/profile" element={<UserProfiles />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/blank" element={<Blank />} />
-
-            {/* Forms */}
             <Route path="/form-elements" element={<FormElements />} />
             <Route path="/add-product" element={<AdipumaForm />} />
-
-            {/* Tables */}
             <Route path="/product-table" element={<AdipumaTable />} />
-
-            {/* Ui Elements */}
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/avatars" element={<Avatars />} />
             <Route path="/badge" element={<Badges />} />
             <Route path="/buttons" element={<Buttons />} />
             <Route path="/images" element={<Images />} />
             <Route path="/videos" element={<Videos />} />
-
-            {/* Charts */}
             <Route path="/line-chart" element={<LineChart />} />
             <Route path="/bar-chart" element={<BarChart />} />
           </Route>
 
-          {/* Auth Layout */}
-          <Route path="/signin" element={<SignIn />} />
+          {/* Rutas públicas */}
+          <Route path="/" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
-
-          {/* Fallback Route */}
+          <Route path="/logout" element={<Logout />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

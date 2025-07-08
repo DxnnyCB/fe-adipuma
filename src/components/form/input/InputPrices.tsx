@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { FC } from "react";
 
 interface InputProps {
@@ -17,6 +17,8 @@ interface InputProps {
   error?: boolean;
   hint?: string;
   required?: boolean;
+  readOnly?: boolean;
+  onErrorChange?: (error: string | null) => void;
 }
 
 const COP_FORMATTER = new Intl.NumberFormat("es-CO", {
@@ -41,10 +43,27 @@ const InputPrices: FC<InputProps> = ({
   error = false,
   hint,
   required = false,
+  readOnly = false,
+  onErrorChange,
 }) => {
   const [internalValue, setInternalValue] = useState<string>(value ? value.toString() : "");
   const [inputError, setInputError] = useState<string | null>(null);
 
+  // Notifica al padre si cambia el error
+  useEffect(() => {
+    if (onErrorChange) {
+      onErrorChange(inputError);
+    }
+  }, [inputError, onErrorChange]);
+
+  // Sincroniza el valor externo con el interno
+  useEffect(() => {
+    if (typeof value === "string" || typeof value === "number") {
+      setInternalValue(value.toString());
+    } else {
+      setInternalValue("");
+    }
+  }, [value]);
 
   // Maneja el cambio y el formateo
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,8 +95,10 @@ const InputPrices: FC<InputProps> = ({
     }
   };
 
-  // Muestra el valor formateado en el input
-  const displayValue =
+
+  // Corrige el displayValue para campos readOnly: usa el prop value directamente si está en modo solo lectura
+  // Siempre muestra el valor formateado, incluso en readOnly
+  const finalDisplayValue =
     internalValue && !isNaN(Number(internalValue))
       ? COP_FORMATTER.format(Number(internalValue))
       : "";
@@ -101,7 +122,7 @@ const InputPrices: FC<InputProps> = ({
         id={id}
         name={name}
         placeholder={placeholder}
-        value={displayValue}
+        value={finalDisplayValue}
         onChange={handleChange}
         min={minValue}
         max={maxValue}
@@ -111,17 +132,17 @@ const InputPrices: FC<InputProps> = ({
         required={required}
         inputMode="numeric"
         autoComplete="off"
+        readOnly={readOnly}
       />
 
       {(hint || inputError) && (
         <p
-          className={`mt-1.5 text-xs ${
-            error || inputError
+          className={`mt-1.5 text-xs ${error || inputError
               ? "text-error-500"
               : success
-              ? "text-success-500"
-              : "text-gray-500"
-          }`}
+                ? "text-success-500"
+                : "text-gray-500"
+            }`}
         >
           {inputError ? inputError : hint}
         </p>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { FC } from "react";
 
 interface InputProps {
@@ -17,6 +17,7 @@ interface InputProps {
   error?: boolean;
   hint?: string;
   required?: boolean;
+  onErrorChange?: (error: string | null) => void;
 }
 
 const InputLinks: FC<InputProps> = ({
@@ -35,9 +36,16 @@ const InputLinks: FC<InputProps> = ({
   error = false,
   hint,
   required = false,
+  onErrorChange,
 }) => {
   const [customError, setCustomError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (onErrorChange) {
+      onErrorChange(customError);
+    }
+  }, [customError, onErrorChange]);
+  
   let inputClasses = ` h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3  dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${className}`;
 
   if (disabled) {

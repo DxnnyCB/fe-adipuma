@@ -1,10 +1,7 @@
 export interface FinalProduct {
-  onSubmit: (data: {
+    id?: number;
     descripcion: string;
     observaciones: string;
-    idEstadoCompra?: { id: number } | null;
-    idEstadoVenta?: { id: number } | null;
-  }) => void;
-  idEstadoCompra?: { id: number } | null;
-  idEstadoVenta?: { id: number } | null;
+    idEstadoCompra: { id: number };
+    idEstadoVenta: { id: number };
 }

@@ -1,93 +1,143 @@
-import { useEffect, useState } from "react";
-import { getAllProducts } from "../../services/GET/GetAllProducts";
-import { Product } from "../../interfaces/Product.interface";
+import { useState, useMemo } from "react";
+// import { PageableParams } from "../../services/GET/GetAllProducts";
 import ProductFilters from "./ProductFilters";
 import ProductTable from "./ProductTable";
 import PageSizeSelector from "./PageSizeSelector";
-import { FilteredProducts } from "../utils/FilteredProducts";
+import { deleteProduct } from "../../services/DELETE/DeleteProduct";
+// import { Modal } from "../../../ui/modal";
+import { useProductFilters } from "../utils/useProductFilters";
+import { useProducts } from "../utils/useProducts";
+import { toast } from "react-toastify";
+import { toastStyles } from "../../../../styles/toastStyles";
+import { DeleteProductModal } from "./modals/DeleteProductModal";
+import EditProductModal from "./modals/EditProductModal";
 
 export default function ViewProduct() {
+  // Filtros y búsqueda
+  const {
+    selectedMetodoPago,
+    setSelectedMetodoPago,
+    selectedEstadoVenta,
+    setSelectedEstadoVenta,
+    selectedEstadoCompra,
+    setSelectedEstadoCompra,
+    selectedYear,
+    setSelectedYear,
+    selectedMonth,
+    setSelectedMonth,
+    selectedYearSale,
+    setSelectedYearSale,
+    selectedMonthSale,
+    setSelectedMonthSale,
+    search,
+    setSearch,
+    clearCompra,
+    clearVenta,
+  } = useProductFilters();
+
+  // Memoiza los filtros para evitar renders infinitos
+  const filters = useMemo(
+    () => ({
+      selectedYear,
+      selectedMonth,
+      selectedYearSale,
+      selectedMonthSale,
+      selectedMetodoPago,
+      selectedEstadoVenta,
+      selectedEstadoCompra,
+      search,
+    }),
+    [
+      selectedYear,
+      selectedMonth,
+      selectedYearSale,
+      selectedMonthSale,
+      selectedMetodoPago,
+      selectedEstadoVenta,
+      selectedEstadoCompra,
+      search,
+    ]
+  );
+
+  // Otros estados
   const [popoverProductId, setPopoverProductId] = useState<string | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(10);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
-  // Filtros adicionales
-  const [selectedMetodoPago, setSelectedMetodoPago] = useState<string | null>(null);
-  const [selectedEstadoVenta, setSelectedEstadoVenta] = useState<string | null>(null);
-  const [selectedEstadoCompra, setSelectedEstadoCompra] = useState<string | null>(null);
+  // Fetch de productos y paginación
+  const { products, totalElements, error, refetch } = useProducts({
+    filters,
+    page,
+    pageSize,
+  });
 
-  // Año y Mes state and options
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
-  const [selectedYearSale, setSelectedYearSale] = useState<number | null>(null);
-  const [selectedMonthSale, setSelectedMonthSale] = useState<number | null>(null);
-
-  // Example: generate years from 2020 to current year
+  // Constantes de UI
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 2019 }, (_, i) => 2020 + i);
   const months = [
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
   ];
-
-  const paymentMethods = [
-    "Efectivo",
-    "Nequi",
-    "Nequi y Efectivo"
-  ];
-
+  const paymentMethods = ["Efectivo", "Nequi", "Nequi y Efectivo"];
   const pageSizeOptions = [1, 5, 10, 20];
 
-  useEffect(() => {
-    getAllProducts()
-      .then((data) => setProducts(data as Product[]))
-      .catch((error) => console.error(error));
-  }, []);
+  // (Eliminado: filters ya no es necesario aquí)
 
-  // Filtrado y paginado
-  const filteredProducts = FilteredProducts(
-    products,
-    selectedYear,
-    selectedMonth,
-    search,
-    selectedYearSale,
-    selectedMonthSale,
-    selectedMetodoPago,
-    selectedEstadoVenta,
-    selectedEstadoCompra
-  );
-
-  const clearCompraFilters = () => {
-    setSelectedYear(null);
-    setSelectedMonth(null);
-    setPage(1);
-  };
-  const clearVentaFilters = () => {
-    setSelectedYearSale(null);
-    setSelectedMonthSale(null);
-    setPage(1);
+  const handleDelete = async (id: string) => {
+    setDeleteId(id); // Muestra el popup
   };
 
-  const paginatedProducts = filteredProducts.slice(
-    (page - 1) * pageSize,
-    page * pageSize
-  );
-  const totalPages = Math.ceil(filteredProducts.length / pageSize);
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    setIsDeleting(true);
+    try {
+      await deleteProduct(deleteId);
+      setDeleteId(null);
+      setIsDeleting(false);
+      toast.success("Prenda eliminada correctamente", {
+        style: toastStyles.success,
+      });
+      refetch();
+    } catch (error) {
+      setIsDeleting(false);
+      toast.error("Error eliminando prenda" + (error instanceof Error ? `: ${error.message}` : ""), {
+        style: toastStyles.error,
+      });
+      console.error("Error eliminando prenda:", error);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteId(null);
+  };
+
+  // useProducts ya maneja el fetching y el efecto
 
   // Funciones para editar y eliminar
   const handleEdit = (id: string) => {
-    // Implementa la lógica de edición aquí
-    console.log("Edit product", id);
+    setEditId(id);
+    setIsEditing(true);
   };
-  const handleDelete = (id: string) => {
-    // Implementa la lógica de eliminación aquí
-    console.log("Delete product", id);
+
+  const closeEditModal = () => {
+    setEditId(null);
+    setIsEditing(false);
   };
+
+  const productToEdit = products.find(p => String(p.id) === String(editId));
+
+  const productToDelete = products.find(p => String(p.id) === String(deleteId));
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+      {/* Feedback de error global */}
+      {error && (
+        <div className="text-center text-red-500 py-2 text-sm">{error}</div>
+      )}
       {/* Filtros de fechas y adicionales fuera de la tabla */}
       <ProductFilters
         years={years}
@@ -102,8 +152,14 @@ export default function ViewProduct() {
         setSelectedMonthSale={setSelectedMonthSale}
         search={search}
         setSearch={setSearch}
-        onClearCompra={clearCompraFilters}
-        onClearVenta={clearVentaFilters}
+        onClearCompra={() => {
+          clearCompra();
+          setPage(1);
+        }}
+        onClearVenta={() => {
+          clearVenta();
+          setPage(1);
+        }}
         selectedMetodoPago={selectedMetodoPago}
         setSelectedMetodoPago={setSelectedMetodoPago}
         selectedEstadoVenta={selectedEstadoVenta}
@@ -111,6 +167,27 @@ export default function ViewProduct() {
         selectedEstadoCompra={selectedEstadoCompra}
         setSelectedEstadoCompra={setSelectedEstadoCompra}
       />
+
+      {/* Popup de confirmación extraído a componente */}
+      <DeleteProductModal
+        isOpen={!!deleteId}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+        product={productToDelete}
+      />
+
+      {/* Modal de edición con pestañas */}
+      <EditProductModal
+        isOpen={isEditing}
+        onClose={closeEditModal}
+        product={productToEdit}
+        onUpdated={() => {
+          //closeEditModal();
+          refetch();
+        }}
+      />
+
       {/* Barra superior: PageSizeSelector y Buscador */}
       <div className="flex items-center w-full gap-x-4 px-4 pt-4">
         <PageSizeSelector
@@ -123,17 +200,17 @@ export default function ViewProduct() {
       {/* Tabla de productos */}
       <div className="max-w-full overflow-x-auto my-4">
         <ProductTable
-          products={paginatedProducts}
+          products={products}
           paymentMethods={paymentMethods}
           popoverProductId={popoverProductId}
           setPopoverProductId={setPopoverProductId}
           onEdit={handleEdit}
           onDelete={handleDelete}
           page={page}
-          totalPages={totalPages}
+          totalPages={Math.ceil(totalElements / pageSize)}
           setPage={setPage}
           pageSize={pageSize}
-          filteredCount={filteredProducts.length}
+          filteredCount={totalElements}
         />
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import ComponentCard from "../../../common/ComponentCard.tsx";
 import Label from "../../../form/Label.tsx";
 import InputPrices from "../../../form/input/InputPrices.tsx";
@@ -8,119 +8,50 @@ import Button from "../../../ui/button/Button.tsx";
 import Checkbox from "../../../form/input/Checkbox.tsx";
 import { PaperPlaneIcon } from "../../../../icons/index.ts";
 import Alert from "../../../ui/alert/Alert.tsx";
-//import { toast } from "react-toastify";
+import { SaleStatusResponse } from "../../interfaces/SaleStatusResponse.interface.tsx";
+import { useSaleStatus, estadoVentaOptions, estadoComisionOptions, metodoPagoOptions } from "../../../../hooks/useSaleStatus.ts";
 
 interface SaleStatusProps {
-  onSubmit: (data: {
-    precioVenta: string;
-    estadoVenta: string;
-    comision: string;
-    estadoComision: string;
-    faltaPagar: string;
-    fechaVenta: string | null;
-    metodoPago: string;
-    ganancia: string;
-  }) => void;
+  precioCompra: number | null;
+  onSubmit: (data: SaleStatusResponse) => void;
 }
 
-export default function SaleStatus({ onSubmit }: SaleStatusProps) {
-  const [precioVenta, setPrecioVenta] = useState("");
-  const [estadoVenta, setEstadoVenta] = useState("Sin vender");
-  const [comision, setComision] = useState("");
-  const [estadoComision, setEstadoComision] = useState("");
-  const [faltaPagar, setFaltaPagar] = useState("");
-  const [fechaVenta, setFechaVenta] = useState<Date | null>(null);
-  const [metodoPago, setMetodoPago] = useState("");
-  const [ganancia, setGanancia] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [vendido, setVendido] = useState(false);
+const SaleStatus: React.FC<SaleStatusProps> = ({ precioCompra, onSubmit }) => {
+  const {
+    vendido,
+    precioVenta,
+    setPrecioVenta,
+    estadoVenta,
+    setEstadoVenta,
+    comision,
+    estadoComision,
+    setEstadoComision,
+    faltaPagar = 0,
+    setFaltaPagar,
+    fechaVenta,
+    setFechaVenta,
+    metodoPago,
+    setMetodoPago,
+    ganancia,
+    loading,
+    error,
+    handleCheckboxChange,
+    handleSubmit,
+    calcularComision,
+    comisionActiva, // Asegurando que comisionActiva esté incluido
+    actualizarComisionActiva,
+  } = useSaleStatus({ precioCompra, onSubmit });
 
-  const estadoVentaOptions = [
-    { value: "Vendido", label: "Vendido" },
-    { value: "Sin vender", label: "Sin vender" },
-  ];
-
-  const estadoComisionOptions = [
-    { value: "Pagada", label: "Pagada" },
-    { value: "Pendiente", label: "Pendiente" },
-  ];
-
-  const metodoPagoOptions = [
-    { value: "Efectivo", label: "Efectivo" },
-    { value: "Nequi", label: "Nequi" },
-    { value: "Nequi y Efectivo", label: "Nequi y Efectivo" },
-  ];
-
-  // Cuando cambia el checkbox, actualiza el estadoVenta y resetea campos si es necesario
-  const handleCheckboxChange = (checked: boolean) => {
-    setVendido(checked);
+  const handleComisionCheckboxChange = (checked: boolean) => {
+    actualizarComisionActiva(checked); // Usar la nueva función del hook para actualizar el estado y la comisión
     if (checked) {
-      setEstadoVenta("Vendido");
-    } else {
-      setEstadoVenta("Sin vender");
-      setPrecioVenta("");
-      setComision("");
-      setEstadoComision("");
-      setFaltaPagar("");
-      setFechaVenta(null);
-      setMetodoPago("");
-      setGanancia("");
-      setError(null);
+      calcularComision(Number(ganancia)); // Recalcular comisión si el checkbox está activo
     }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validación de campos obligatorios solo si está vendido
-    if (vendido) {
-      if (
-        !precioVenta.trim() ||
-        !estadoVenta ||
-        !comision.trim() ||
-        !estadoComision ||
-        !faltaPagar.trim() ||
-        !fechaVenta ||
-        !metodoPago ||
-        !ganancia.trim()
-      ) {
-        setError("Todos los campos son obligatorios.");
-        return;
-      }
-    }
-    setError(null);
-    setLoading(true);
-
-    setTimeout(() => {
-      // Formatea la fecha como "DD-MM-YYYY"
-      let fechaFormateada = null;
-      if (fechaVenta instanceof Date && !isNaN(fechaVenta.getTime())) {
-        const year = fechaVenta.getFullYear();
-        const month = String(fechaVenta.getMonth() + 1).padStart(2, "0");
-        const day = String(fechaVenta.getDate()).padStart(2, "0");
-        fechaFormateada = `${year}-${month}-${day}`;
-        
-      }
-
-      const data = {
-        precioVenta: vendido ? precioVenta : "",
-        estadoVenta,
-        comision: vendido ? comision : "",
-        estadoComision: vendido ? estadoComision : "",
-        faltaPagar: vendido ? faltaPagar : "",
-        fechaVenta: vendido ? fechaFormateada : null,
-        metodoPago: vendido ? metodoPago : "",
-        ganancia: vendido ? ganancia : "",
-      };
-      onSubmit(data);
-      setLoading(false);
-    }, 1200);
   };
 
   return (
     <ComponentCard title="Agregar Estado de Venta">
-      <form className="space-y-6" onSubmit={handleSubmit}>
+      <form className="space-y-6" onSubmit={handleSubmit} autoComplete="off">
         <Checkbox
           label="¿Esta prenda ya se vendió?"
           checked={vendido}
@@ -133,7 +64,6 @@ export default function SaleStatus({ onSubmit }: SaleStatusProps) {
             message="Si no se ha vendido, por favor continuar"
           />
         )}
-        {/* Solo muestra los campos si está vendido */}
         {vendido && (
           <>
             {error && (
@@ -164,6 +94,13 @@ export default function SaleStatus({ onSubmit }: SaleStatusProps) {
               />
             </div>
             <div>
+              <Checkbox
+                label="¿Activar comisión?"
+                checked={comisionActiva} // Usar el valor del hook directamente
+                onChange={handleComisionCheckboxChange}
+              />
+            </div>
+            <div>
               <Label htmlFor="comision">Comisión</Label>
               <InputPrices
                 minValue={0}
@@ -172,7 +109,7 @@ export default function SaleStatus({ onSubmit }: SaleStatusProps) {
                 id="comision"
                 placeholder="Ej: $10.000"
                 value={comision}
-                onChange={e => setComision(e.target.value)}
+                readOnly={true}
                 required={vendido}
               />
             </div>
@@ -187,7 +124,7 @@ export default function SaleStatus({ onSubmit }: SaleStatusProps) {
                 required={vendido}
               />
             </div>
-            <div>
+            <div className="hidden">
               <Label htmlFor="faltaPagar">Falta por Pagar</Label>
               <InputPrices
                 minValue={0}
@@ -197,7 +134,6 @@ export default function SaleStatus({ onSubmit }: SaleStatusProps) {
                 placeholder="Ej: $5.000"
                 value={faltaPagar}
                 onChange={e => setFaltaPagar(e.target.value)}
-                required={vendido}
               />
             </div>
             <div>
@@ -215,8 +151,11 @@ export default function SaleStatus({ onSubmit }: SaleStatusProps) {
               <Select
                 options={metodoPagoOptions}
                 placeholder="Seleccione una opción"
-                value={metodoPago}
-                onChange={setMetodoPago}
+                value={metodoPago ? metodoPago.value : undefined}
+                onChange={value => {
+                  const selected = metodoPagoOptions.find(opt => opt.value === value) || null;
+                  setMetodoPago(selected);
+                }}
                 className="dark:bg-dark-900"
                 required={vendido}
               />
@@ -230,7 +169,7 @@ export default function SaleStatus({ onSubmit }: SaleStatusProps) {
                 id="ganancia"
                 placeholder="Ej: $20.000"
                 value={ganancia}
-                onChange={e => setGanancia(e.target.value)}
+                readOnly={true}
                 required={vendido}
               />
             </div>
@@ -238,6 +177,7 @@ export default function SaleStatus({ onSubmit }: SaleStatusProps) {
         )}
         <div className="flex items-center gap-5">
           <Button
+            type="submit"
             size="md"
             variant="primary"
             endIcon={
@@ -270,4 +210,6 @@ export default function SaleStatus({ onSubmit }: SaleStatusProps) {
       </form>
     </ComponentCard>
   );
-}
+};
+
+export default SaleStatus;

@@ -20,6 +20,7 @@ export interface Product {
         fechaVenta: string;
         ganancia: number;
         idMetodoPago: {
+            id: number;
             tipoPago: string;
         };
     };

@@ -2,6 +2,7 @@ import { useState } from "react";
 import PurchaseStatus from "../add-forms/add-status-purchase/PurchaseStatus";
 import SaleStatus from "../add-forms/add-status-sale/SaleStatus";
 import FinalProduct from "../add-forms/add-product/FinalProduct";
+import { useNavigate } from "react-router-dom";
 
 const steps = [
   { label: "Estado de Compra" },
@@ -16,6 +17,8 @@ export default function ProductWizard() {
   const [purchaseId, setPurchaseId] = useState<number | null>(null);
   const [saleId, setSaleId] = useState<number | null>(null);
 
+  const navigate = useNavigate();
+
   // Recibe los datos de PurchaseStatus y avanza
   const handlePurchaseSubmit = (data: unknown) => {
     setPurchaseData(data);
@@ -24,7 +27,7 @@ export default function ProductWizard() {
     } else {
       setPurchaseId(null);
     }
-    //setStep(2);
+    setStep(2);
   };
 
   // Recibe los datos de SaleStatus y avanza
@@ -46,6 +49,9 @@ export default function ProductWizard() {
       ...(finalData && typeof finalData === "object" ? finalData : {}),
     };
     console.log("Datos finales del producto:", allData);
+    setTimeout(() => {
+      navigate("/product-table");
+    }, 1000);
   };
 
   // Progress bar width
@@ -83,10 +89,19 @@ export default function ProductWizard() {
 
       {/* Form Steps */}
       {step === 1 && (
-        <PurchaseStatus onSubmit={handlePurchaseSubmit} />
+        <>
+          <PurchaseStatus onSubmit={handlePurchaseSubmit} />
+        </>
       )}
       {step === 2 && (
-        <SaleStatus onSubmit={handleSaleSubmit} />
+        <SaleStatus
+          precioCompra={
+            purchaseData && typeof purchaseData === "object" && "precioCompra" in purchaseData
+              ? (purchaseData as { precioCompra?: number }).precioCompra ?? null
+              : null
+          }
+          onSubmit={handleSaleSubmit}
+        />
       )}
       {step === 3 && (
         <FinalProduct

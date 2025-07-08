@@ -9,10 +9,16 @@ export default function AdipumaForm() {
         title="Adipuma Sports"
         description="Dashboard - Adipuma Sports"
       />
-      <PageBreadcrumb pageTitle="Agregar ropa" />
-        <div className="space-y-6">
-          <ProductWizard />
-        </div>
+      <PageBreadcrumb
+        pageTitle="Agregar ropa"
+        breadcrumbs={[
+          { label: "Listado de ropa", to: "/product-table" },
+          { label: "Agregar ropa" },
+        ]}
+      />
+      <div className="space-y-6">
+        <ProductWizard />
+      </div>
     </div>
   );
 }

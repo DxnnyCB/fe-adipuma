@@ -10,7 +10,13 @@ export default function AdipumaTable() {
 
   return (
     <>
-      <PageBreadcrumb pageTitle="Listado de ropa" />
+      <PageBreadcrumb
+        pageTitle="Listado de ropa"
+        breadcrumbs={[
+          { label: "Agregar ropa", to: "/add-product" },
+          { label: "Listado de ropa" },
+        ]}
+      />
       <div className="space-y-6">
         <ComponentCard title="Administrar ropa">
           <ViewProduct />

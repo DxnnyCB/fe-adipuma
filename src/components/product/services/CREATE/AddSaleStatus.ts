@@ -1,14 +1,12 @@
-import axios from 'axios';
-import { StatusPurchase } from '../../interfaces/PurchaseStatus.interface';
+import axiosInstance from '../../../../interceptor/axiosInstance';
+import { SaleStatus } from '../../interfaces/SaleStatus.interface';
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-export const addPurchaseStatus = async (data: StatusPurchase) => {
+export const addSaleStatus = async (data: SaleStatus) => {
   try {
-    const response = await axios.post(API_URL + 'estado-compra', data);
+    const response = await axiosInstance.post('estado-venta', data);
     return response.data;
   } catch (error) {
-    console.error('Error al crear el estado de compra:', error);
+    console.error('Error al crear el estado de venta:', error);
     throw error;
   }
 };

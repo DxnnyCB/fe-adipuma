@@ -1,44 +1,21 @@
-import React, { useState } from "react";
 import ComponentCard from "../../../common/ComponentCard.tsx";
 import Label from "../../../form/Label.tsx";
 import Input from "../../../form/input/InputField.tsx";
 import Button from "../../../ui/button/Button.tsx";
 import { PaperPlaneIcon } from "../../../../icons/index.ts";
-import type { FinalProduct } from "../../interfaces/FinalProduct.interface.tsx";
+import type { FinalProductOnSubmit } from "../../interfaces/ProductOnSubmit.interface.tsx";
+import { useFinalProduct } from "../../../../hooks/useFinalProduct.ts";
 
-
-
-export default function FinalProduct({ onSubmit, idEstadoCompra, idEstadoVenta }: FinalProduct) {
-  const [descripcion, setDescripcion] = useState("");
-  const [observaciones, setObservaciones] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validación de campos obligatorios
-    if (
-      !descripcion.trim() ||
-      !observaciones.trim()
-    ) {
-      setError("Todos los campos son obligatorios.");
-      return;
-    }
-    setError(null);
-    setLoading(true);
-
-    const data = {
-      descripcion,
-      observaciones,
-      idEstadoCompra,
-      idEstadoVenta,
-    };
-
-    console.log("Datos del formulario:", data);
-    onSubmit(data); // Llama a la función onSubmit pasada como prop
-    // Aquí podrías hacer un fetch/axios para enviar los datos al backend
-  };
+export default function FinalProduct({ onSubmit, idEstadoCompra, idEstadoVenta }: FinalProductOnSubmit) {
+  const {
+    descripcion,
+    setDescripcion,
+    observaciones,
+    setObservaciones,
+    error,
+    loading,
+    handleSubmit,
+  } = useFinalProduct({ onSubmit, idEstadoCompra, idEstadoVenta });
 
   return (
     <ComponentCard title="Finalizar Producto">
@@ -47,7 +24,7 @@ export default function FinalProduct({ onSubmit, idEstadoCompra, idEstadoVenta }
           <div className="text-red-500 text-sm">{error}</div>
         )}
         <div>
-          <Label htmlFor="descripcion">Descripción</Label>
+          <Label htmlFor="descripcion">Nombre Prenda</Label>
           <Input
             type="text"
             id="descripcion"
@@ -65,11 +42,12 @@ export default function FinalProduct({ onSubmit, idEstadoCompra, idEstadoVenta }
             placeholder="Observaciones adicionales"
             value={observaciones}
             onChange={e => setObservaciones(e.target.value)}
-            required
+            required={false}
           />
         </div>
         <div className="flex items-center gap-5">
           <Button
+            type="submit"
             size="md"
             variant="primary"
             endIcon={

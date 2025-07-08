@@ -48,7 +48,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
       <div className="flex gap-2 w-full">
         <select
           value={selectedYear || ""}
-          onChange={e => setSelectedYear(e.target.value ? Number(e.target.value) : null)}
+          onChange={e => setSelectedYear(e.target.value ? Number(e.target.value) : null)} 
           className="border rounded px-2 py-1 bg-white dark:bg-slate-900 border-gray-300 dark:border-white/[0.05] text-gray-400 dark:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-1/2"
         >
           <option value="">Año</option>
