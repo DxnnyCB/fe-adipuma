@@ -22,17 +22,6 @@ interface Props {
     onCancel?: () => void;
 }
 
-function getMetodoPagoId(metodoPago: unknown): number {
-    if (
-        typeof metodoPago === 'object' &&
-        metodoPago !== null &&
-        'id' in metodoPago &&
-        typeof (metodoPago as { id: unknown }).id === 'number'
-    ) {
-        return (metodoPago as { id: number }).id;
-    }
-    return 0;
-}
 
 const EditSaleStatusForm: React.FC<Props> = ({ product, onUpdated, onCancel }) => {
     const {
@@ -48,14 +37,13 @@ const EditSaleStatusForm: React.FC<Props> = ({ product, onUpdated, onCancel }) =
     const initialFormState: SaleStatusWithMetodoPago = {
         ...product.idEstadoVenta,
         idMetodoPago: {
-            id: getMetodoPagoId(product.idEstadoVenta.idMetodoPago.id),
+            id: product.idEstadoVenta.idMetodoPago?.id || 0,
             tipoPago: product.idEstadoVenta.idMetodoPago?.tipoPago || ""
         }
     };
     const [form, setForm] = useState<SaleStatusWithMetodoPago>(initialFormState);
     const [initialForm] = useState<SaleStatusWithMetodoPago>(initialFormState);
     const [loading, setLoading] = useState(false);
-
     const handleChange = useCallback(<K extends keyof SaleStatusWithMetodoPago>(name: K, value: SaleStatusWithMetodoPago[K]) => {
         setForm(prevForm => ({ ...prevForm, [name]: value }));
     }, []);
@@ -64,6 +52,7 @@ const EditSaleStatusForm: React.FC<Props> = ({ product, onUpdated, onCancel }) =
         e.preventDefault();
         setLoading(true);
         try {
+            console.log(form.idMetodoPago)
             await updateSaleStatus(product.idEstadoVenta.id, {
                 ...form,
                 idMetodoPago: { id: form.idMetodoPago.id }
@@ -236,23 +225,28 @@ const EditSaleStatusForm: React.FC<Props> = ({ product, onUpdated, onCancel }) =
 
                     return (
                         <Select
-                            options={metodosPago.map(mp => ({
-                                value: mp.tipoPago, // usamos tipoPago como value
-                                label: mp.tipoPago
+                            options={metodosPago.map((mp) => ({
+                                value: mp.tipoPago,
+                                label: mp.tipoPago,
                             }))}
                             placeholder="Seleccione una opción"
                             value={form.idMetodoPago?.tipoPago || ""}
-                            onChange={value => {
-                                const selected = metodosPago.find(mp => mp.tipoPago === value);
+                            onChange={(value) => {
+                                console.log("🔄 Valor recibido del Select:", value);
+
+                                const selected = metodosPago.find((mp) => mp.tipoPago === value);
                                 if (selected) {
+                                    console.log("✅ Método de pago seleccionado:", selected);
+
                                     handleChange("idMetodoPago", {
                                         id: selected.id,
-                                        tipoPago: selected.tipoPago
+                                        tipoPago: selected.tipoPago,
                                     });
                                 } else {
+                                    console.warn("❌ No se encontró el método de pago:", value);
                                     handleChange("idMetodoPago", {
                                         id: 0,
-                                        tipoPago: value
+                                        tipoPago: value,
                                     });
                                 }
                             }}
@@ -261,6 +255,7 @@ const EditSaleStatusForm: React.FC<Props> = ({ product, onUpdated, onCancel }) =
                     );
                 })()}
             </div>
+
 
             <div>
                 <Label htmlFor="ganancia">Ganancia</Label>
