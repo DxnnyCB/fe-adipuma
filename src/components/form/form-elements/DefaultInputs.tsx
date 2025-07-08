@@ -57,17 +57,15 @@ export default function DefaultInputs() {
           </div>
         </div>
 
-        <div>
-          <DatePicker
-            id="date-picker"
-            label="Date Picker Input"
-            placeholder="Select a date"
-            onChange={(dates, currentDateString) => {
-              // Handle your logic
-              console.log({ dates, currentDateString });
-            }}
-          />
-        </div>
+        <DatePicker
+          id="date-picker"
+          label="Date Picker Input"
+          placeholder="Select a date"
+          onChange={(date) => {
+            console.log("Date seleccionado:", date);
+          }}
+        />
+
 
         <div>
           <Label htmlFor="tm">Time Picker Input</Label>
